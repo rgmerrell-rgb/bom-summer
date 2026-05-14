@@ -14,7 +14,7 @@ export function UserMenu({
   const [email, setEmail] = useState(initialEmail);
   const [open, setOpen]   = useState(false);
   const menuRef           = useRef<HTMLDivElement>(null);
-  const supabase          = createClient();
+  const supabase          = useRef(createClient()).current;
 
   // Stay in sync with auth state changes (sign-in, sign-out, token refresh)
   useEffect(() => {
@@ -22,7 +22,7 @@ export function UserMenu({
       setEmail(session?.user?.email ?? null);
     });
     return () => subscription.unsubscribe();
-  }, []);
+  }, [supabase.auth]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
