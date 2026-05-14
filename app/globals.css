@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background:         #F5F0E2;
+  --foreground:         #2C2416;
+
+  --primary:            #1B3A5C;
+  --primary-dark:       #122740;
+  --primary-foreground: #FFFFFF;
+
+  --accent:             #D4A847;
+  --accent-light:       #EDD98A;
+  --accent-foreground:  #2C2416;
+
+  --card:               #FFFFFF;
+  --card-foreground:    #2C2416;
+
+  --border:             #DDD5BB;
+  --muted:              #EDE6D0;
+  --muted-foreground:   #6A6050;
+
+  --success:            #2D6A4F;
+  --success-light:      #D8F3DC;
+}
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
