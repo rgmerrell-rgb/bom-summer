@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { CheckInSection } from "./CheckInSection";
-import { ActivityCalendar, type CalendarDay } from "./ActivityCalendar";
+import { SummerProgress } from "./SummerProgress";
 import { MilestoneBadges, type MilestoneWithStatus } from "./MilestoneBadges";
 import { DashboardGreeting } from "./DashboardGreeting";
 import { ReflectionHistory, type ReflectionEntry } from "./ReflectionHistory";
@@ -12,23 +12,6 @@ import { ReflectionHistory, type ReflectionEntry } from "./ReflectionHistory";
 
 function todayStr(): string {
   return new Date().toISOString().split("T")[0];
-}
-
-function isoToDate(iso: string): Date {
-  return new Date(iso + "T00:00:00");
-}
-
-function subDays(base: string, n: number): string {
-  const d = isoToDate(base);
-  d.setDate(d.getDate() - n);
-  return d.toISOString().split("T")[0];
-}
-
-function formatShort(iso: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-  }).format(isoToDate(iso));
 }
 
 function computeStreak(dateSet: Set<string>, today: string): number {
@@ -44,19 +27,6 @@ function computeStreak(dateSet: Set<string>, today: string): number {
     }
   }
   return streak;
-}
-
-function build28Days(today: string, dateSet: Set<string>): CalendarDay[] {
-  return Array.from({ length: 28 }, (_, i) => {
-    const dateS = subDays(today, 27 - i);
-    return {
-      dateStr:    dateS,
-      label:      formatShort(dateS),
-      isToday:    dateS === today,
-      hasCheckIn: dateSet.has(dateS),
-      isFuture:   dateS > today,
-    };
-  });
 }
 
 // ---------------------------------------------------------------------------
@@ -121,10 +91,6 @@ export default async function DashboardPage() {
     .filter((c) => c.notes && c.check_in_date !== today)
     .map((c) => ({ id: c.id, checked_in_at: c.checked_in_at, notes: c.notes! }));
 
-  // ── Calendar ──────────────────────────────────────────────────────────────
-
-  const calendarDays = build28Days(today, checkInDateSet);
-
   // ── Milestones ────────────────────────────────────────────────────────────
 
   const earnedMap = new Map<string, string>(
@@ -173,8 +139,8 @@ export default async function DashboardPage() {
       {/* 3 ── Daily check-in + reflection */}
       <CheckInSection alreadyRead={alreadyCheckedIn} todayNote={todayNote} />
 
-      {/* 4 ── Activity calendar */}
-      <ActivityCalendar days={calendarDays} />
+      {/* 4 ── Summer challenge progress */}
+      <SummerProgress today={today} />
 
       {/* 5 ── Milestones */}
       {milestonesWithStatus.length > 0 && (
