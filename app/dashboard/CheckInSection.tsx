@@ -1,7 +1,31 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { checkIn, saveReflection } from "./actions";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export type ReflectionEntry = {
+  id:            string;
+  check_in_date: string;
+  notes:         string;
+};
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function formatDate(iso: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month:   "short",
+    day:     "numeric",
+    year:    "numeric",
+  }).format(new Date(iso + "T00:00:00"));
+}
 
 // ---------------------------------------------------------------------------
 // Submit buttons — useFormStatus must live inside the <form>
@@ -36,32 +60,17 @@ function SaveReflectionButton() {
 }
 
 // ---------------------------------------------------------------------------
-// Reflection form — shown when the member has already read today
-// key=todayNote forces remount after a save so the textarea reflects the
-// latest saved value rather than stale uncontrolled input state.
+// Editable reflection form
 // ---------------------------------------------------------------------------
 
 function ReflectionForm({ todayNote }: { todayNote: string | null }) {
   return (
-    <form key={todayNote ?? "__empty__"} action={saveReflection} className="space-y-3">
-      <div>
-        <label
-          htmlFor="reflection-note"
-          className="block text-sm font-medium"
-          style={{ color: "#2C2416" }}
-        >
-          What stood out to you?{" "}
-          <span className="font-normal" style={{ color: "#6A6050" }}>
-            (optional)
-          </span>
-        </label>
-        <p className="mt-0.5 text-xs" style={{ color: "#6A6050" }}>
-          A verse, a thought, something that resonated — just for you.
-        </p>
-      </div>
-
+    <form
+      key={todayNote ?? "__empty__"}
+      action={saveReflection}
+      className="space-y-3"
+    >
       <textarea
-        id="reflection-note"
         name="note"
         rows={4}
         defaultValue={todayNote ?? ""}
@@ -74,42 +83,127 @@ function ReflectionForm({ todayNote }: { todayNote: string | null }) {
           lineHeight: "1.6",
         }}
       />
-
       <div className="flex items-center gap-3">
         <SaveReflectionButton />
-        {todayNote && (
-          <span className="text-xs" style={{ color: "#2D6A4F" }}>
-            ✓ Reflection saved
-          </span>
-        )}
       </div>
     </form>
   );
 }
 
 // ---------------------------------------------------------------------------
-// CheckInSection — the main export used by dashboard/page.tsx
+// Read-only view of today's reflection
+// ---------------------------------------------------------------------------
+
+function ReflectionReadOnly({
+  note,
+  onEdit,
+}: {
+  note: string;
+  onEdit: () => void;
+}) {
+  return (
+    <div
+      className="rounded-lg px-4 py-3"
+      style={{ backgroundColor: "#F5F0E2", border: "1px solid #DDD5BB" }}
+    >
+      <p
+        className="text-sm leading-relaxed whitespace-pre-wrap"
+        style={{ color: "#2C2416" }}
+      >
+        {note}
+      </p>
+      <button
+        onClick={onEdit}
+        className="mt-2 text-xs hover:underline"
+        style={{ color: "#6A6050" }}
+      >
+        Edit reflection
+      </button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Scrollable past-reflections list
+// ---------------------------------------------------------------------------
+
+function PastReflections({ entries }: { entries: ReflectionEntry[] }) {
+  if (entries.length === 0) return null;
+
+  return (
+    <div
+      className="pt-4 mt-2"
+      style={{ borderTop: "1px solid #DDD5BB" }}
+    >
+      <p
+        className="mb-3 text-xs font-semibold uppercase tracking-wide"
+        style={{ color: "#6A6050" }}
+      >
+        Previous reflections ({entries.length})
+      </p>
+
+      <div
+        className="space-y-3 overflow-y-auto pr-1"
+        style={{ maxHeight: "260px" }}
+      >
+        {entries.map((entry) => (
+          <div
+            key={entry.id}
+            className="rounded-lg px-4 py-3"
+            style={{ backgroundColor: "#FAFAF8", border: "1px solid #DDD5BB" }}
+          >
+            <p
+              className="mb-1.5 text-xs font-semibold"
+              style={{ color: "#6A6050" }}
+            >
+              {formatDate(entry.check_in_date)}
+            </p>
+            <p
+              className="text-sm leading-relaxed whitespace-pre-wrap"
+              style={{ color: "#2C2416" }}
+            >
+              {entry.notes}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// CheckInSection — main export
 // ---------------------------------------------------------------------------
 
 export function CheckInSection({
   alreadyRead,
   todayNote,
+  pastReflections,
 }: {
-  alreadyRead: boolean;
-  todayNote: string | null;
+  alreadyRead:      boolean;
+  todayNote:        string | null;
+  pastReflections:  ReflectionEntry[];
 }) {
+  // Start in edit mode only if there is no saved note yet.
+  const [isEditing, setIsEditing] = useState(!todayNote);
+
+  // Sync back to read-only when todayNote arrives after a save (page revalidates).
+  useEffect(() => {
+    if (todayNote) setIsEditing(false);
+  }, [todayNote]);
+
   return (
     <section
       className="rounded-xl bg-white p-6 space-y-4"
       style={{ border: "1px solid #DDD5BB" }}
     >
       {!alreadyRead ? (
-        /* ── Not yet read today ───────────────────────────────────────── */
+        /* ── Not yet read today ─────────────────────────────────────── */
         <form action={checkIn}>
           <CheckInSubmitButton />
         </form>
       ) : (
-        /* ── Already read today ──────────────────────────────────────── */
+        /* ── Already read today ─────────────────────────────────────── */
         <>
           <div
             className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
@@ -117,9 +211,32 @@ export function CheckInSection({
           >
             ✓ Read today
           </div>
-          <ReflectionForm todayNote={todayNote} />
+
+          <div>
+            <p className="text-sm font-medium" style={{ color: "#2C2416" }}>
+              What stood out to you?{" "}
+              <span className="font-normal" style={{ color: "#6A6050" }}>
+                (optional)
+              </span>
+            </p>
+            <p className="mt-0.5 text-xs" style={{ color: "#6A6050" }}>
+              A verse, a thought, something that resonated — just for you.
+            </p>
+          </div>
+
+          {isEditing || !todayNote ? (
+            <ReflectionForm todayNote={todayNote} />
+          ) : (
+            <ReflectionReadOnly
+              note={todayNote}
+              onEdit={() => setIsEditing(true)}
+            />
+          )}
         </>
       )}
+
+      {/* Past reflections — shown whenever there are entries */}
+      <PastReflections entries={pastReflections} />
     </section>
   );
 }

@@ -1,10 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { CheckInSection } from "./CheckInSection";
+import { CheckInSection, type ReflectionEntry } from "./CheckInSection";
 import { SummerProgress } from "./SummerProgress";
 import { MilestoneBadges, type MilestoneWithStatus } from "./MilestoneBadges";
 import { DashboardGreeting } from "./DashboardGreeting";
-import { ReflectionHistory, type ReflectionEntry } from "./ReflectionHistory";
 
 // ---------------------------------------------------------------------------
 // Date helpers
@@ -95,7 +94,7 @@ export default async function DashboardPage() {
   // Past reflections: check-ins with notes, excluding today, newest first
   const reflectionEntries: ReflectionEntry[] = allCheckIns
     .filter((c) => c.notes && c.check_in_date !== today)
-    .map((c) => ({ id: c.id, checked_in_at: c.checked_in_at, notes: c.notes! }));
+    .map((c) => ({ id: c.id, check_in_date: c.check_in_date, notes: c.notes! }));
 
   // ── Milestones ────────────────────────────────────────────────────────────
 
@@ -143,7 +142,11 @@ export default async function DashboardPage() {
       </div>
 
       {/* 3 ── Daily check-in + reflection */}
-      <CheckInSection alreadyRead={alreadyCheckedIn} todayNote={todayNote} />
+      <CheckInSection
+        alreadyRead={alreadyCheckedIn}
+        todayNote={todayNote}
+        pastReflections={reflectionEntries}
+      />
 
       {/* 4 ── Summer challenge progress */}
       <SummerProgress today={today} />
@@ -155,9 +158,6 @@ export default async function DashboardPage() {
           totalCheckIns={totalDaysRead}
         />
       )}
-
-      {/* 6 ── Past reflections */}
-      <ReflectionHistory entries={reflectionEntries} />
 
     </div>
   );
