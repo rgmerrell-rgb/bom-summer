@@ -58,25 +58,27 @@ export default function SignupForm() {
         </div>
       )}
 
-      <Field label="Full name" required>
+      <Field label="Display name" required>
         <input
           name="full_name"
           type="text"
           required
           autoComplete="name"
-          placeholder="Jane Smith"
+          placeholder="Jane"
           className={inputClass}
           style={inputStyle}
         />
       </Field>
 
-      <Field label="Email address" required>
+      <Field label="Username" required>
         <input
-          name="email"
-          type="email"
+          name="username"
+          type="text"
           required
-          autoComplete="email"
-          placeholder="jane@example.com"
+          autoComplete="username"
+          placeholder="jane_smith"
+          pattern="[a-zA-Z0-9_\-]{3,20}"
+          title="3–20 characters: letters, numbers, underscores, hyphens"
           className={inputClass}
           style={inputStyle}
         />
@@ -95,7 +97,7 @@ export default function SignupForm() {
         />
       </Field>
 
-      <Field label="Phone number">
+      <Field label="Phone number (for SMS reminders)">
         <input
           name="phone"
           type="tel"
@@ -104,43 +106,6 @@ export default function SignupForm() {
           className={inputClass}
           style={inputStyle}
         />
-      </Field>
-
-      <Field label="Preferred reminder time" required>
-        <input
-          name="reminder_time"
-          type="time"
-          required
-          defaultValue="08:00"
-          className={inputClass}
-          style={inputStyle}
-        />
-      </Field>
-
-      <Field label="Remind me via" required>
-        <div className="flex flex-col gap-2">
-          {(
-            [
-              { value: "email", label: "Email" },
-              { value: "sms",   label: "SMS" },
-              { value: "both",  label: "Email & SMS" },
-            ] as const
-          ).map(({ value, label }) => (
-            <label
-              key={value}
-              className="flex cursor-pointer items-center gap-3 rounded-lg px-4 py-3 text-sm transition-colors"
-              style={{ border: "1px solid #DDD5BB", color: "#2C2416" }}
-            >
-              <input
-                type="radio"
-                name="reminder_preference"
-                value={value}
-                defaultChecked={value === "email"}
-              />
-              {label}
-            </label>
-          ))}
-        </div>
       </Field>
 
       <SubmitButton />

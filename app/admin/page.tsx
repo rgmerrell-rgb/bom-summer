@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
 import { ResetButton } from "./ResetButton";
+import { RecalculateButton } from "./RecalculateButton";
+import { usernameToEmail } from "@/app/signup/actions";
 
 export const metadata = { title: "Admin — Book of Mormon Summer" };
 
@@ -19,6 +21,14 @@ function formatDate(iso: string): string {
     day:   "numeric",
     year:  "numeric",
   }).format(new Date(iso));
+}
+
+// Strip the synthetic domain to recover the display username.
+const USERNAME_SUFFIX = "@" + usernameToEmail("x").split("@")[1];
+function emailToUsername(email: string): string {
+  return email.endsWith(USERNAME_SUFFIX)
+    ? email.slice(0, -USERNAME_SUFFIX.length)
+    : email;
 }
 
 // ---------------------------------------------------------------------------
@@ -181,7 +191,7 @@ export default async function AdminPage() {
                   borderBottom: i < memberStats.length - 1 ? "1px solid #DDD5BB" : undefined,
                 }}
               >
-                {/* Member name + email */}
+                {/* Member name + username */}
                 <td className="px-4 py-3">
                   <p className="font-medium" style={{ color: "#2C2416" }}>
                     {m.full_name ?? "—"}
@@ -194,7 +204,9 @@ export default async function AdminPage() {
                       </span>
                     )}
                   </p>
-                  <p className="text-xs" style={{ color: "#6A6050" }}>{m.email}</p>
+                  <p className="text-xs" style={{ color: "#6A6050" }}>
+                    @{emailToUsername(m.email)}
+                  </p>
                 </td>
 
                 {/* Total days */}
@@ -233,12 +245,18 @@ export default async function AdminPage() {
 
                 {/* Actions */}
                 <td className="px-4 py-3">
-                  {m.readToday && (
-                    <ResetButton
+                  <div className="flex flex-col gap-1.5">
+                    {m.readToday && (
+                      <ResetButton
+                        memberId={m.id}
+                        memberName={m.full_name ?? `@${emailToUsername(m.email)}`}
+                      />
+                    )}
+                    <RecalculateButton
                       memberId={m.id}
-                      memberName={m.full_name ?? m.email}
+                      memberName={m.full_name ?? `@${emailToUsername(m.email)}`}
                     />
-                  )}
+                  </div>
                 </td>
               </tr>
             ))}

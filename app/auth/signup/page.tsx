@@ -1,6 +1,12 @@
 import Link from "next/link";
 
-export default function SignUpPage() {
+export default function SignUpPage({
+  searchParams,
+}: {
+  searchParams?: { error?: string };
+}) {
+  const error = searchParams?.error;
+
   return (
     <div className="mx-auto mt-20 max-w-sm px-4">
       <h1 className="text-2xl font-bold text-bom-text">Create an account</h1>
@@ -11,17 +17,25 @@ export default function SignUpPage() {
         </Link>
       </p>
 
+      {error && (
+        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
       <form className="mt-6 flex flex-col gap-4" action="/api/auth/signup" method="POST">
         <div className="flex flex-col gap-1">
-          <label htmlFor="email" className="text-sm font-medium text-bom-text">
-            Email
+          <label htmlFor="username" className="text-sm font-medium text-bom-text">
+            Username
           </label>
           <input
-            id="email"
-            name="email"
-            type="email"
+            id="username"
+            name="username"
+            type="text"
             required
-            autoComplete="email"
+            autoComplete="username"
+            pattern="[a-zA-Z0-9_\-]{3,20}"
+            title="3–20 characters: letters, numbers, underscores, hyphens"
             className="rounded-md border border-bom-border bg-white px-3 py-2 text-sm text-bom-text placeholder:text-bom-muted focus:border-bom-navy focus:outline-none focus:ring-2 focus:ring-bom-navy/20"
           />
         </div>

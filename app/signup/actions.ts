@@ -1,54 +1,58 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { sendWelcomeEmail } from "@/lib/email/welcome";
 import { redirect } from "next/navigation";
 
 export type SignupState = {
   error?: string;
 } | null;
 
+// Supabase Auth requires an email. We synthesize one from the username
+// so users only need to remember their username, not an email address.
+const USERNAME_DOMAIN = "bom.local";
+export function usernameToEmail(username: string): string {
+  return `${username.toLowerCase()}@${USERNAME_DOMAIN}`;
+}
+
 export async function signUpAction(
   _prev: SignupState,
   formData: FormData
 ): Promise<SignupState> {
-  const fullName  = (formData.get("full_name")           as string).trim();
-  const email     = (formData.get("email")                as string).trim();
-  const password  = (formData.get("password")             as string);
-  const phone     = (formData.get("phone")                as string).trim() || null;
-  const remTime   = (formData.get("reminder_time")        as string);
-  const remPref   = (formData.get("reminder_preference")  as string);
+  const fullName = (formData.get("full_name") as string).trim();
+  const username = (formData.get("username")  as string).trim().toLowerCase();
+  const password = (formData.get("password")  as string);
+  const phone    = (formData.get("phone")     as string).trim() || null;
 
-  if (!fullName || !email || !password || !remTime || !remPref) {
+  if (!fullName || !username || !password) {
     return { error: "Please fill in all required fields." };
   }
 
+  if (!/^[a-z0-9_-]{3,20}$/.test(username)) {
+    return { error: "Username must be 3–20 characters: letters, numbers, underscores, hyphens." };
+  }
+
+  const email = usernameToEmail(username);
   const supabase = await createClient();
 
-  // Pass all profile fields as metadata so the DB trigger can populate the
-  // members row atomically on insert.
   const { error: authError } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: {
-        full_name:           fullName,
+        full_name: fullName,
+        username,
         phone,
-        reminder_time:       remTime,
-        reminder_preference: remPref,
       },
     },
   });
 
   if (authError) {
+    // Supabase returns a generic "User already registered" message for duplicate
+    // emails; surface a friendlier username-specific message instead.
+    if (authError.message.toLowerCase().includes("already registered")) {
+      return { error: "That username is already taken. Please choose another." };
+    }
     return { error: authError.message };
-  }
-
-  // Fire-and-forget — a Resend failure shouldn't block the user.
-  try {
-    await sendWelcomeEmail({ to: email, fullName });
-  } catch (err) {
-    console.error("Welcome email failed:", err);
   }
 
   redirect("/dashboard");

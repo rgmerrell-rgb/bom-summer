@@ -1,11 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { usernameToEmail } from "@/app/signup/actions";
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
-  const email = formData.get("email") as string;
+  const username = ((formData.get("username") as string) ?? "").trim().toLowerCase();
   const password = formData.get("password") as string;
 
+  const email = usernameToEmail(username);
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
@@ -16,7 +18,5 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  return NextResponse.redirect(new URL("/dashboard", request.url), {
-    status: 303,
-  });
+  return NextResponse.redirect(new URL("/dashboard", request.url), { status: 303 });
 }
