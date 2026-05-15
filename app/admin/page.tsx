@@ -3,7 +3,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
 import { ResetButton } from "./ResetButton";
 import { RecalculateButton } from "./RecalculateButton";
-import { usernameToEmail } from "@/app/signup/actions";
+import { emailToUsername } from "@/lib/username";
 
 export const metadata = { title: "Admin — Book of Mormon Summer" };
 
@@ -21,14 +21,6 @@ function formatDate(iso: string): string {
     day:   "numeric",
     year:  "numeric",
   }).format(new Date(iso));
-}
-
-// Strip the synthetic domain to recover the display username.
-const USERNAME_SUFFIX = "@" + usernameToEmail("x").split("@")[1];
-function emailToUsername(email: string): string {
-  return email.endsWith(USERNAME_SUFFIX)
-    ? email.slice(0, -USERNAME_SUFFIX.length)
-    : email;
 }
 
 // ---------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-import { usernameToEmail } from "@/app/signup/actions";
+import { usernameToEmail } from "@/lib/username";
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData();

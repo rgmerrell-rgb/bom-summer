@@ -2,17 +2,11 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { usernameToEmail } from "@/lib/username";
 
 export type SignupState = {
   error?: string;
 } | null;
-
-// Supabase Auth requires an email. We synthesize one from the username
-// so users only need to remember their username, not an email address.
-const USERNAME_DOMAIN = "bom.local";
-export function usernameToEmail(username: string): string {
-  return `${username.toLowerCase()}@${USERNAME_DOMAIN}`;
-}
 
 export async function signUpAction(
   _prev: SignupState,
