@@ -14,10 +14,16 @@ function todayStr(): string {
   return new Date().toISOString().split("T")[0];
 }
 
+function subtractDays(base: string, n: number): string {
+  const d = new Date(base + "T00:00:00");
+  d.setDate(d.getDate() - n);
+  return d.toISOString().split("T")[0];
+}
+
 function computeStreak(dateSet: Set<string>, today: string): number {
   let streak = 0;
   for (let i = 0; i <= 365; i++) {
-    const d = i === 0 ? today : subDays(today, i);
+    const d = i === 0 ? today : subtractDays(today, i);
     if (dateSet.has(d)) {
       streak++;
     } else if (i === 0) {
